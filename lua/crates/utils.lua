@@ -11,4 +11,8 @@ Module.is_cargo_toml = function()
     return false
 end
 
+Module.register_highlight_group = function(group, colour)
+    vim.cmd("highlight " .. group .. " guifg=" .. colour)
+end
+
 return Module
