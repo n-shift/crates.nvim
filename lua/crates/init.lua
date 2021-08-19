@@ -6,4 +6,6 @@ local config = require("crates.config")
 
 local Module = {}
 
+Module.api = api
+
 return Module
