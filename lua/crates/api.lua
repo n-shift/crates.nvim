@@ -5,7 +5,7 @@ local Module = {}
 
 function Module.get_current_dependency_version(name)
     local url = table.concat({"https://crates.io/api/v1/crates/", name})
-    local raw = curl.get(url, { accept = "application/json" })
+    local raw = curl.get(url, { accept = "application/json", compressed = false, dump = {""} })
     return json.decode(raw).crate.max_stable_version
 end
 
