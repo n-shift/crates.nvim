@@ -25,8 +25,8 @@ Module.get_dependency_positions = function(names)
     local buffer_content = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     for buffer_line, buffer_line_content in pairs(buffer_content) do
         for _, name in pairs(names) do
-            local pattern_oneliner = name .. " ="
-	    local pattern_table = "[dependencies." .. name .. "]"
+            local pattern_oneliner = table.concat({name, " ="})
+	    local pattern_table = table.concat({"[dependencies.", name, "]"})
 	    local oneliner_match = string.sub(buffer_line_content, 1, string.len(pattern_oneliner)) == pattern_oneliner
 	    local table_match = string.sub(buffer_line_content, 1, string.len(pattern_table)) == pattern_table
 	    if oneliner_match or table_match then

@@ -12,7 +12,7 @@ Module.is_cargo_toml = function()
 end
 
 Module.register_highlight_group = function(group, colour)
-    vim.cmd("highlight " .. group .. " guifg=" .. colour)
+    vim.cmd(table.concat({"highlight ", group, " guifg=", colour}))
 end
 
 return Module
