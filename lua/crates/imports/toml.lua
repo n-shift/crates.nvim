@@ -30,9 +30,9 @@ TOML.parse = function(toml, options)
 	local nl = "[\10"
 	do
 		local crlf = "\13\10"
-		nl = nl .. crlf
+		nl = table.concat({nl, crlf})
 	end
-	nl = nl .. "]"
+	nl = table.concat({nl, "]"})
 	
 	-- stores text data
 	local buffer = ""
@@ -78,7 +78,7 @@ TOML.parse = function(toml, options)
 		if delim:match("%%") then
 			append = delim:gsub("%%", "")
 		end
-		for match in (str .. append):gmatch("(.-)" .. delim) do
+		for match in (table.concat({str, append})):gmatch(table.concat({"(.-)", delim})) do
 			table.insert(result, match)
 		end
 		return result
@@ -90,14 +90,14 @@ TOML.parse = function(toml, options)
 		if not strictOnly or (strictOnly and strict) then
 			local line = 1
 			local c = 0
-			for l in toml:gmatch("(.-)" .. nl) do
+			for l in toml:gmatch(table.concat({"(.-)", nl})) do
 				c = c + l:len()
 				if c >= cursor then
 					break
 				end
 				line = line + 1
 			end
-			error("TOML: " .. message .. " on line " .. line .. ".", 4)
+			error(table.concat({"TOML: ", message, " on line ", line, "."}), 4)
 		end
 	end
 
@@ -186,27 +186,27 @@ TOML.parse = function(toml, options)
 
 					if escape[char(1)] then
 						-- normal escape
-						str = str .. escape[char(1)]
+						str = table.concat({str, escape[char(1)]})
 						step(2) -- go past backslash and the character
 					elseif char(1) == "u" then
 						-- utf-16
 						step()
-						local uni = char(1) .. char(2) .. char(3) .. char(4)
+						local uni = table.concat({char(1), char(2), char(3), char(4)})
 						step(5)
 						uni = tonumber(uni, 16)
 						if (uni >= 0 and uni <= 0xd7ff) and not (uni >= 0xe000 and uni <= 0x10ffff) then
-							str = str .. utf(uni)
+							str = table.concat({str, utf(uni)})
 						else
 							err("Unicode escape is not a Unicode scalar")
 						end
 					elseif char(1) == "U" then
 						-- utf-32
 						step()
-						local uni = char(1) .. char(2) .. char(3) .. char(4) .. char(5) .. char(6) .. char(7) .. char(8)
+						local uni = table.concat({char(1), char(2), char(3), char(4), char(5), char(6), char(7), char(8)})
 						step(9)
 						uni = tonumber(uni, 16)
 						if (uni >= 0 and uni <= 0xd7ff) and not (uni >= 0xe000 and uni <= 0x10ffff) then
-							str = str .. utf(uni)
+							str = table.concat({str, utf(uni)})
 						else
 							err("Unicode escape is not a Unicode scalar")
 						end
@@ -216,7 +216,7 @@ TOML.parse = function(toml, options)
 				end
 			else
 				-- if we're not in a double-quoted string, just append it to our buffer raw and keep going
-				str = str .. char()
+				str = table.concat({str, char()})
 				step()
 			end
 		end
@@ -236,10 +236,10 @@ TOML.parse = function(toml, options)
 						-- number buffer
 						exp = ""
 					elseif char() ~= "_" then
-						num = num .. char()
+						num = table.concat({num, char()})
 					end
 				elseif char():match("[%+%-0-9]") then
-					exp = exp .. char()
+					exp = table.concat({exp, char()})
 				else
 					err("Invalid exponent")
 				end
@@ -252,7 +252,7 @@ TOML.parse = function(toml, options)
 					if char() == "," or char() == "]" or char() == "#" or char():match(nl) or char():match(ws) then
 						break
 					end
-					num = num .. char()
+					num = table.concat({num, char()})
 					step()
 				end
 			else
@@ -369,7 +369,7 @@ TOML.parse = function(toml, options)
 				quoted = false
 				buffer = ""
 			else
-				buffer = buffer .. char()
+				buffer = table.concat({buffer, char()})
 				step()
 			end
 		end
@@ -453,7 +453,7 @@ TOML.parse = function(toml, options)
 			if v then
 				-- if the key already exists in the current object, throw an error
 				if obj[buffer] then
-					err('Cannot redefine key "' .. buffer .. '"', true)
+					err(table.concat({'Cannot redefine key "', buffer, '"'}), true)
 				end
 				obj[buffer] = v.value
 			end
@@ -546,7 +546,7 @@ TOML.parse = function(toml, options)
 					processKey()
 					buffer = ""
 				else
-					buffer = buffer .. char()
+					buffer = table.concat({buffer, char()})
 					step()
 				end
 			end
@@ -559,7 +559,7 @@ TOML.parse = function(toml, options)
 			quotedKey = true
 		end
 
-		buffer = buffer .. (char():match(nl) and "" or char())
+		buffer = table.concat({buffer, (char():match(nl) and "" or char())})
 		step()
 	end
 
@@ -574,9 +574,9 @@ TOML.encode = function(tbl)
 	local function parse(tbl)
 		for k, v in pairs(tbl) do
 			if type(v) == "boolean" then
-				toml = toml .. k .. " = " .. tostring(v) .. "\n"
+				toml = table.concat({toml, k, " = ", tostring(v), "\n"})
 			elseif type(v) == "number" then
-				toml = toml .. k .. " = " .. tostring(v) .. "\n"
+				toml = table.concat({toml, k, " = ", tostring(v), "\n"})
 			elseif type(v) == "string" then
 				local quote = '"'
 				v = v:gsub("\\", "\\\\")
@@ -584,7 +584,7 @@ TOML.encode = function(tbl)
 				-- if the string has any line breaks, make it multiline
 				if v:match("^\n(.*)$") then
 					quote = quote:rep(3)
-					v = "\\n" .. v
+					v = table.concat({"\\n", v})
 				elseif v:match("\n") then
 					quote = quote:rep(3)
 				end
@@ -595,7 +595,7 @@ TOML.encode = function(tbl)
 				v = v:gsub("\r", "\\r")
 				v = v:gsub('"', '\\"')
 				v = v:gsub("/", "\\/")
-				toml = toml .. k .. " = " .. quote .. v .. quote .. "\n"
+				toml = table.concat({toml, k, " = ", quote, v, quote, "\n"})
 			elseif type(v) == "table" then
 				local array, arrayTable = true, true
 				local first = {}
@@ -613,7 +613,7 @@ TOML.encode = function(tbl)
 						-- double bracket syntax go!
 						table.insert(cache, k)
 						for kk, vv in pairs(v) do
-							toml = toml .. "[[" .. table.concat(cache, ".") .. "]]\n"
+							toml = table.concat({toml, "[[", table.concat(cache, "."), "]]\n"})
 							for k3, v3 in pairs(vv) do
 								if type(v3) ~= "table" then
 									vv[k3] = nil
@@ -626,16 +626,16 @@ TOML.encode = function(tbl)
 						table.remove(cache)
 					else
 						-- plain ol boring array
-						toml = toml .. k .. " = [\n"
+						toml = table.concat({toml, k, " = [\n"})
 						for kk, vv in pairs(first) do
-							toml = toml .. tostring(vv) .. ",\n"
+							toml = table.concat({toml, tostring(vv), ",\n"})
 						end
-						toml = toml .. "]\n"
+						toml = table.concat({toml, "]\n"})
 					end
 				else
 					-- just a key/value table, folks
 					table.insert(cache, k)
-					toml = toml .. "[" .. table.concat(cache, ".") .. "]\n"
+					toml = table.concat({toml, "[", table.concat(cache, "."), "]\n"})
 					parse(first)
 					parse(v)
 					table.remove(cache)

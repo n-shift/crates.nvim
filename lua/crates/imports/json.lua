@@ -22,7 +22,7 @@
 -- SOFTWARE.
 --
 
-local json = { _version = "0.1.2" }
+local json = { _version = "0.1.2opt" }
 
 -------------------------------------------------------------------------------
 -- Encode
@@ -47,7 +47,7 @@ end
 
 
 local function escape_char(c)
-  return "\\" .. (escape_char_map[c] or string.format("u%04x", c:byte()))
+  return table.concat({"\\", (escape_char_map[c] or string.format("u%04x", c:byte()))})
 end
 
 
@@ -82,7 +82,7 @@ local function encode_table(val, stack)
       table.insert(res, encode(v, stack))
     end
     stack[val] = nil
-    return "[" .. table.concat(res, ",") .. "]"
+    return table.concat({"[", table.concat(res, ","), "]"})
 
   else
     -- Treat as an object
@@ -90,23 +90,23 @@ local function encode_table(val, stack)
       if type(k) ~= "string" then
         error("invalid table: mixed or invalid key types")
       end
-      table.insert(res, encode(k, stack) .. ":" .. encode(v, stack))
+      table.insert(res, table.concat({encode(k, stack), ":", encode(v, stack)}))
     end
     stack[val] = nil
-    return "{" .. table.concat(res, ",") .. "}"
+    return table.concat({"{", table.concat(res, ","), "}"})
   end
 end
 
 
 local function encode_string(val)
-  return '"' .. val:gsub('[%z\1-\31\\"]', escape_char) .. '"'
+  return table.concat({'"', val:gsub('[%z\1-\31\\"]', escape_char), '"'})
 end
 
 
 local function encode_number(val)
   -- Check for NaN, -inf and inf
   if val ~= val or val <= -math.huge or val >= math.huge then
-    error("unexpected number value '" .. tostring(val) .. "'")
+    error(table.concat({"unexpected number value '", tostring(val), "'"}))
   end
   return string.format("%.14g", val)
 end
@@ -127,7 +127,7 @@ encode = function(val, stack)
   if f then
     return f(val, stack)
   end
-  error("unexpected type '" .. t .. "'")
+  error(table.concat({"unexpected type '", t, "'"}))
 end
 
 
@@ -227,25 +227,25 @@ local function parse_string(str, i)
       decode_error(str, j, "control character in string")
 
     elseif x == 92 then -- `\`: Escape
-      res = res .. str:sub(k, j - 1)
+      res = table.concat({res, str:sub(k, j - 1)})
       j = j + 1
       local c = str:sub(j, j)
       if c == "u" then
         local hex = str:match("^[dD][89aAbB]%x%x\\u%x%x%x%x", j + 1)
                  or str:match("^%x%x%x%x", j + 1)
                  or decode_error(str, j - 1, "invalid unicode escape in string")
-        res = res .. parse_unicode_escape(hex)
+        res = table.concat({res, parse_unicode_escape(hex)})
         j = j + #hex
       else
         if not escape_chars[c] then
-          decode_error(str, j - 1, "invalid escape char '" .. c .. "' in string")
+          decode_error(str, j - 1, table.concat({"invalid escape char '", c, "' in string"}))
         end
-        res = res .. escape_char_map_inv[c]
+        res = table.concat({res, escape_char_map_inv[c]})
       end
       k = j + 1
 
     elseif x == 34 then -- `"`: End of string
-      res = res .. str:sub(k, j - 1)
+      res = table.concat({res, str:sub(k, j - 1)})
       return res, j + 1
     end
 
@@ -261,7 +261,7 @@ local function parse_number(str, i)
   local s = str:sub(i, x - 1)
   local n = tonumber(s)
   if not n then
-    decode_error(str, i, "invalid number '" .. s .. "'")
+    decode_error(str, i, table.concat({"invalid number '", s, "'"}))
   end
   return n, x
 end
@@ -271,7 +271,7 @@ local function parse_literal(str, i)
   local x = next_char(str, i, delim_chars)
   local word = str:sub(i, x - 1)
   if not literals[word] then
-    decode_error(str, i, "invalid literal '" .. word .. "'")
+    decode_error(str, i, table.concat({"invalid literal '", word, "'"}))
   end
   return literal_map[word], x
 end
@@ -368,13 +368,13 @@ parse = function(str, idx)
   if f then
     return f(str, idx)
   end
-  decode_error(str, idx, "unexpected character '" .. chr .. "'")
+  decode_error(str, idx, table.concat({"unexpected character '", chr, "'"}))
 end
 
 
 function json.decode(str)
   if type(str) ~= "string" then
-    error("expected argument of type string, got " .. type(str))
+    error(table.concat({"expected argument of type string, got ", type(str)}))
   end
   local res, idx = parse(str, next_char(str, 1, space_chars, true))
   idx = next_char(str, idx, space_chars, true)
