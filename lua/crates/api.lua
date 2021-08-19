@@ -1,9 +1,10 @@
 local curl = require('plenary.curl')
 local json = require('imports.json')
+local semver = require('imports.semver')
 
 local Module = {}
 
-function Module.get_current_dependency_version(name, unstable)
+Module.get_current_dependency_version = function(name, unstable)
     local url = table.concat({"https://crates.io/api/v1/crates/", name})
     body = curl.request({
         url = url,
@@ -17,6 +18,16 @@ function Module.get_current_dependency_version(name, unstable)
 
     if unstable then return crate_info.max_version else return crate_info.max_stable_version end
 
+end
+
+Module.get_outdated_deps = function(list, unstable)
+    local deps = {}
+    for name, version in pairs(list) do
+        local newest = Module.get_current_dependency_version(name, unstable)
+	if semver(version) < semver(newest) then deps[name] = version end
+    end
+
+    return deps
 end
 
 return Module
