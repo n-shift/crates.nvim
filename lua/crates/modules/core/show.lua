@@ -108,9 +108,9 @@ end
 return function()
     if not is_valid_cargo_toml() then return end
 
-    local dependencies = get_dependencies(config.unstable)
+    local dependencies = get_dependencies(config.options.unstable)
     local dependency_positions = get_dependency_positions(dependencies)
-    local outdated_deps = get_outdated_deps(dependencies, config.unstable)
+    local outdated_deps = get_outdated_deps(dependencies, config.options.unstable)
 
     set_virtual_text(dependencies, dependency_positions, outdated_deps)
         
