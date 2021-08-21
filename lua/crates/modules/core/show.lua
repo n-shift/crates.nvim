@@ -37,7 +37,7 @@ local get_dependency_positions = function(deps)
     local dependency_positions = {}
     local content = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     for buffer_line, buffer_line_content in pairs(content) do
-        for name, metadata in pairs(deps) do
+        for name, version in pairs(deps) do
             local pattern_oneliner = table.concat({name, " ="})
             local pattern_table = table.concat({"[dependencies.", name, "]"})
             local oneliner_match = string.sub(buffer_line_content, 1, string.len(pattern_oneliner)) == pattern_oneliner
@@ -47,8 +47,9 @@ local get_dependency_positions = function(deps)
             elseif table_match then
                 local bline = buffer_line
                 while bline <= #content do
-                    if bline ~= table.concat({"version = \"", metadata.version, "\""}) then
+                    if content[bline] == table.concat({"version = \"", version, "\""}) then
                         dependency_positions[name] = bline
+                        break
                     end
                     bline = bline + 1
                 end
