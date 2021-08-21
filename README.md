@@ -1,6 +1,10 @@
 # 📦 crates.nvim
 Lua plugin for managing Rust's project dependencies, inspired by [vuki656/package-info.nvim](https://github.com/vuki656/package-info.nvim)
 
+## 📸 Screenshots
+![Cargo.toml with nord theme](media/Cargo.toml.png)
+###### Screenshot with [Nord theme](https://github.com/shaunsingh/nord.nvim)
+
 ## ✨ Features
 - Display latest crate's version as virtual text (unstable versions are optional)
 
