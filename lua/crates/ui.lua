@@ -21,7 +21,6 @@ Module.set_virtual_text = function(deps, positions, outdated)
             metadata.icon = config.options.icons.style.outdated
         end
         if config.options.icons.enable == false then metadata.icon = "" end
-        print(positions[crate])
         
         vim.api.nvim_buf_set_extmark(0, config.namespace_id, positions[crate] - 1, 0, {
             virt_text = { { metadata.icon .. metadata.version, metadata.group } },

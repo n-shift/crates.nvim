@@ -24,7 +24,6 @@ Module.get_outdated_deps = function(list, unstable)
     local deps = {}
     for name, version in pairs(list) do
         local newest = Module.get_current_dependency_version(name, unstable)
-        print(vim.inspect(version))
         if semver(version) < semver(newest) then deps[name] = newest end
     end
 

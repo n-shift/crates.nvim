@@ -22,7 +22,6 @@ Module.get_dependencies = function(unstable)
         else
             dependencies[name] = metadata
         end
-        print(dependencies[name])
     end
     return dependencies
 end
