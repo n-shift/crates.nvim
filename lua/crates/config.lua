@@ -41,7 +41,7 @@ end
 local Module = {}
 
 Module.setup = function(opts)
-    Module.options = register_user_options()
+    Module.options = register_user_options(opts)
 
     register_autostart(Module.options.autostart)
     GLOBALS.namespace.register()
