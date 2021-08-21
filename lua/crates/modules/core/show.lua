@@ -15,7 +15,7 @@ local is_valid_cargo_toml = function()
 end
 
 local get_dependencies = function(unstable)
-    cargo_toml = toml.parse(
+    local cargo_toml = toml.parse(
         table.concat(
             vim.api.nvim_buf_get_lines(0, 0, -1, false),
             "\n"
@@ -37,13 +37,21 @@ local get_dependency_positions = function(deps)
     local dependency_positions = {}
     local content = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     for buffer_line, buffer_line_content in pairs(content) do
-        for name, _version in pairs(deps) do
+        for name, metadata in pairs(deps) do
             local pattern_oneliner = table.concat({name, " ="})
             local pattern_table = table.concat({"[dependencies.", name, "]"})
             local oneliner_match = string.sub(buffer_line_content, 1, string.len(pattern_oneliner)) == pattern_oneliner
             local table_match = string.sub(buffer_line_content, 1, string.len(pattern_table)) == pattern_table
-            if oneliner_match or table_match then
+            if oneliner_match then
                 dependency_positions[name] = buffer_line
+            elseif table_match then
+                local bline = buffer_line
+                while bline <= #content do
+                    if bline ~= table.concat({"version = \"", metadata.version, "\""}) then
+                        dependency_positions[name] = bline
+                    end
+                    bline = bline + 1
+                end
             end
         end
     end
@@ -81,6 +89,7 @@ local set_virtual_text = function(deps, positions, outdated)
         metadata.group = CONSTANTS.HIGHLIGHT_GROUPS.up_to_date
         if outdated[crate] then
             metadata.icon = config.options.icons.style.outdated
+            metadata.version = outdated[crate]
             metadata.group = CONSTANTS.HIGHLIGHT_GROUPS.outdated
         end
         if config.options.icons.enable == false then metadata.icon = "" end
