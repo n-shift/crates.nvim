@@ -30,10 +30,10 @@ TOML.parse = function(toml, options)
 	local nl = "[\10"
 	do
 		local crlf = "\13\10"
-		nl = table.concat({nl, crlf})
+		nl = table.concat({ nl, crlf })
 	end
-	nl = table.concat({nl, "]"})
-	
+	nl = table.concat({ nl, "]" })
+
 	-- stores text data
 	local buffer = ""
 
@@ -60,7 +60,7 @@ TOML.parse = function(toml, options)
 
 	-- move forward until the next non-whitespace character
 	local function skipWhitespace()
-		while(char():match(ws)) do
+		while char():match(ws) do
 			step()
 		end
 	end
@@ -72,13 +72,15 @@ TOML.parse = function(toml, options)
 
 	-- divide a string into a table around a delimiter
 	local function split(str, delim)
-		if str == "" then return {} end
+		if str == "" then
+			return {}
+		end
 		local result = {}
 		local append = delim
 		if delim:match("%%") then
 			append = delim:gsub("%%", "")
 		end
-		for match in (table.concat({str, append})):gmatch(table.concat({"(.-)", delim})) do
+		for match in (table.concat({ str, append })):gmatch(table.concat({ "(.-)", delim })) do
 			table.insert(result, match)
 		end
 		return result
@@ -90,14 +92,14 @@ TOML.parse = function(toml, options)
 		if not strictOnly or (strictOnly and strict) then
 			local line = 1
 			local c = 0
-			for l in toml:gmatch(table.concat({"(.-)", nl})) do
+			for l in toml:gmatch(table.concat({ "(.-)", nl })) do
 				c = c + l:len()
 				if c >= cursor then
 					break
 				end
 				line = line + 1
 			end
-			error(table.concat({"TOML: ", message, " on line ", line, "."}), 4)
+			error(table.concat({ "TOML: ", message, " on line ", line, "." }), 4)
 		end
 	end
 
@@ -119,7 +121,7 @@ TOML.parse = function(toml, options)
 		-- skip the quotes
 		step(multiline and 3 or 1)
 
-		while(bounds()) do
+		while bounds() do
 			if multiline and char():match(nl) and str == "" then
 				-- skip line break line at the beginning of multiline string
 				step()
@@ -147,7 +149,7 @@ TOML.parse = function(toml, options)
 				if multiline and char(1):match(nl) then
 					-- skip until first non-whitespace character
 					step(1) -- go past the line break
-					while(bounds()) do
+					while bounds() do
 						if not char():match(ws) and not char():match(nl) then
 							break
 						end
@@ -167,8 +169,10 @@ TOML.parse = function(toml, options)
 					-- utf function from http://stackoverflow.com/a/26071044
 					-- converts \uXXX into actual unicode
 					local function utf(char)
-						local bytemarkers = {{0x7ff, 192}, {0xffff, 224}, {0x1fffff, 240}}
-						if char < 128 then return string.char(char) end
+						local bytemarkers = { { 0x7ff, 192 }, { 0xffff, 224 }, { 0x1fffff, 240 } }
+						if char < 128 then
+							return string.char(char)
+						end
 						local charbytes = {}
 						for bytes, vals in pairs(bytemarkers) do
 							if char <= vals[1] then
@@ -186,27 +190,29 @@ TOML.parse = function(toml, options)
 
 					if escape[char(1)] then
 						-- normal escape
-						str = table.concat({str, escape[char(1)]})
+						str = table.concat({ str, escape[char(1)] })
 						step(2) -- go past backslash and the character
 					elseif char(1) == "u" then
 						-- utf-16
 						step()
-						local uni = table.concat({char(1), char(2), char(3), char(4)})
+						local uni = table.concat({ char(1), char(2), char(3), char(4) })
 						step(5)
 						uni = tonumber(uni, 16)
 						if (uni >= 0 and uni <= 0xd7ff) and not (uni >= 0xe000 and uni <= 0x10ffff) then
-							str = table.concat({str, utf(uni)})
+							str = table.concat({ str, utf(uni) })
 						else
 							err("Unicode escape is not a Unicode scalar")
 						end
 					elseif char(1) == "U" then
 						-- utf-32
 						step()
-						local uni = table.concat({char(1), char(2), char(3), char(4), char(5), char(6), char(7), char(8)})
+						local uni = table.concat({ char(1), char(2), char(3), char(4), char(5), char(6), char(7), char(
+							8
+						) })
 						step(9)
 						uni = tonumber(uni, 16)
 						if (uni >= 0 and uni <= 0xd7ff) and not (uni >= 0xe000 and uni <= 0x10ffff) then
-							str = table.concat({str, utf(uni)})
+							str = table.concat({ str, utf(uni) })
 						else
 							err("Unicode escape is not a Unicode scalar")
 						end
@@ -216,19 +222,19 @@ TOML.parse = function(toml, options)
 				end
 			else
 				-- if we're not in a double-quoted string, just append it to our buffer raw and keep going
-				str = table.concat({str, char()})
+				str = table.concat({ str, char() })
 				step()
 			end
 		end
 
-		return {value = str, type = "string"}
+		return { value = str, type = "string" }
 	end
 
 	local function parseNumber()
 		local num = ""
 		local exp
 		local date = false
-		while(bounds()) do
+		while bounds() do
 			if char():match("[%+%-%.eE_0-9]") then
 				if not exp then
 					if char():lower() == "e" then
@@ -236,23 +242,30 @@ TOML.parse = function(toml, options)
 						-- number buffer
 						exp = ""
 					elseif char() ~= "_" then
-						num = table.concat({num, char()})
+						num = table.concat({ num, char() })
 					end
 				elseif char():match("[%+%-0-9]") then
-					exp = table.concat({exp, char()})
+					exp = table.concat({ exp, char() })
 				else
 					err("Invalid exponent")
 				end
-			elseif char():match(ws) or char() == "#" or char():match(nl) or char() == "," or char() == "]" or char() == "}" then
+			elseif
+				char():match(ws)
+				or char() == "#"
+				or char():match(nl)
+				or char() == ","
+				or char() == "]"
+				or char() == "}"
+			then
 				break
 			elseif char() == "T" or char() == "Z" then
 				-- parse the date (as a string, since lua has no date object)
 				date = true
-				while(bounds()) do
+				while bounds() do
 					if char() == "," or char() == "]" or char() == "#" or char():match(nl) or char():match(ws) then
 						break
 					end
-					num = table.concat({num, char()})
+					num = table.concat({ num, char() })
 					step()
 				end
 			else
@@ -262,11 +275,13 @@ TOML.parse = function(toml, options)
 		end
 
 		if date then
-			return {value = num, type = "date"}
+			return { value = num, type = "date" }
 		end
 
 		local float = false
-		if num:match("%.") then float = true end
+		if num:match("%.") then
+			float = true
+		end
 
 		exp = exp and tonumber(exp) or 0
 		num = tonumber(num)
@@ -276,16 +291,16 @@ TOML.parse = function(toml, options)
 				-- lua will automatically convert the result
 				-- of a power operation to a float, so we have
 				-- to convert it back to an int with math.floor
-				value = math.floor(num * 10^exp),
+				value = math.floor(num * 10 ^ exp),
 				type = "int",
 			}
 		end
 
-		return {value = num * 10^exp, type = "float"}
+		return { value = num * 10 ^ exp, type = "float" }
 	end
 
 	local parseArray, getValue
-	
+
 	function parseArray()
 		step() -- skip [
 		skipWhitespace()
@@ -293,7 +308,7 @@ TOML.parse = function(toml, options)
 		local arrayType
 		local array = {}
 
-		while(bounds()) do
+		while bounds() do
 			if char() == "]" then
 				break
 			elseif char():match(nl) then
@@ -301,13 +316,15 @@ TOML.parse = function(toml, options)
 				step()
 				skipWhitespace()
 			elseif char() == "#" then
-				while(bounds() and not char():match(nl)) do
+				while bounds() and not char():match(nl) do
 					step()
 				end
 			else
 				-- get the next object in the array
 				local v = getValue()
-				if not v then break end
+				if not v then
+					break
+				end
 
 				-- set the type if it hasn't been set before
 				if arrayType == nil then
@@ -318,7 +335,7 @@ TOML.parse = function(toml, options)
 
 				array = array or {}
 				table.insert(array, v.value)
-				
+
 				if char() == "," then
 					step()
 				end
@@ -327,7 +344,7 @@ TOML.parse = function(toml, options)
 		end
 		step()
 
-		return {value = array, type = "array"}
+		return { value = array, type = "array" }
 	end
 
 	local function parseInlineTable()
@@ -369,30 +386,30 @@ TOML.parse = function(toml, options)
 				quoted = false
 				buffer = ""
 			else
-				buffer = table.concat({buffer, char()})
+				buffer = table.concat({ buffer, char() })
 				step()
 			end
 		end
 		step() -- skip closing brace
 
-		return {value = tbl, type = "array"}
+		return { value = tbl, type = "array" }
 	end
 
 	local function parseBoolean()
 		local v
 		if toml:sub(cursor, cursor + 3) == "true" then
 			step(4)
-			v = {value = true, type = "boolean"}
+			v = { value = true, type = "boolean" }
 		elseif toml:sub(cursor, cursor + 4) == "false" then
 			step(5)
-			v = {value = false, type = "boolean"}
+			v = { value = false, type = "boolean" }
 		else
 			err("Invalid primitive")
 		end
 
 		skipWhitespace()
 		if char() == "#" then
-			while(not char():match(nl)) do
+			while not char():match(nl) do
 				step()
 			end
 		end
@@ -419,13 +436,12 @@ TOML.parse = function(toml, options)
 
 	-- track whether the current key was quoted or not
 	local quotedKey = false
-	
-	-- parse the document!
-	while(cursor <= toml:len()) do
 
+	-- parse the document!
+	while cursor <= toml:len() do
 		-- skip comments and whitespace
 		if char() == "#" then
-			while(not char():match(nl)) do
+			while not char():match(nl) do
 				step()
 			end
 		end
@@ -437,7 +453,7 @@ TOML.parse = function(toml, options)
 		if char() == "=" then
 			step()
 			skipWhitespace()
-			
+
 			-- trim key name
 			buffer = trim(buffer)
 
@@ -453,7 +469,7 @@ TOML.parse = function(toml, options)
 			if v then
 				-- if the key already exists in the current object, throw an error
 				if obj[buffer] then
-					err(table.concat({'Cannot redefine key "', buffer, '"'}), true)
+					err(table.concat({ 'Cannot redefine key "', buffer, '"' }), true)
 				end
 				obj[buffer] = v.value
 			end
@@ -465,7 +481,7 @@ TOML.parse = function(toml, options)
 			-- skip whitespace and comments
 			skipWhitespace()
 			if char() == "#" then
-				while(bounds() and not char():match(nl)) do
+				while bounds() and not char():match(nl) do
 					step()
 				end
 			end
@@ -524,7 +540,7 @@ TOML.parse = function(toml, options)
 				end
 			end
 
-			while(bounds()) do
+			while bounds() do
 				if char() == "]" then
 					if tableArray then
 						if char(1) ~= "]" then
@@ -546,20 +562,20 @@ TOML.parse = function(toml, options)
 					processKey()
 					buffer = ""
 				else
-					buffer = table.concat({buffer, char()})
+					buffer = table.concat({ buffer, char() })
 					step()
 				end
 			end
 
 			buffer = ""
 			quotedKey = false
-		elseif (char() == '"' or char() == "'") then
+		elseif char() == '"' or char() == "'" then
 			-- quoted key
 			buffer = parseString().value
 			quotedKey = true
 		end
 
-		buffer = table.concat({buffer, (char():match(nl) and "" or char())})
+		buffer = table.concat({ buffer, (char():match(nl) and "" or char()) })
 		step()
 	end
 
@@ -574,9 +590,9 @@ TOML.encode = function(tbl)
 	local function parse(tbl)
 		for k, v in pairs(tbl) do
 			if type(v) == "boolean" then
-				toml = table.concat({toml, k, " = ", tostring(v), "\n"})
+				toml = table.concat({ toml, k, " = ", tostring(v), "\n" })
 			elseif type(v) == "number" then
-				toml = table.concat({toml, k, " = ", tostring(v), "\n"})
+				toml = table.concat({ toml, k, " = ", tostring(v), "\n" })
 			elseif type(v) == "string" then
 				local quote = '"'
 				v = v:gsub("\\", "\\\\")
@@ -584,7 +600,7 @@ TOML.encode = function(tbl)
 				-- if the string has any line breaks, make it multiline
 				if v:match("^\n(.*)$") then
 					quote = quote:rep(3)
-					v = table.concat({"\\n", v})
+					v = table.concat({ "\\n", v })
 				elseif v:match("\n") then
 					quote = quote:rep(3)
 				end
@@ -595,12 +611,14 @@ TOML.encode = function(tbl)
 				v = v:gsub("\r", "\\r")
 				v = v:gsub('"', '\\"')
 				v = v:gsub("/", "\\/")
-				toml = table.concat({toml, k, " = ", quote, v, quote, "\n"})
+				toml = table.concat({ toml, k, " = ", quote, v, quote, "\n" })
 			elseif type(v) == "table" then
 				local array, arrayTable = true, true
 				local first = {}
 				for kk, vv in pairs(v) do
-					if type(kk) ~= "number" then array = false end
+					if type(kk) ~= "number" then
+						array = false
+					end
 					if type(vv) ~= "table" then
 						v[kk] = nil
 						first[kk] = vv
@@ -613,7 +631,7 @@ TOML.encode = function(tbl)
 						-- double bracket syntax go!
 						table.insert(cache, k)
 						for kk, vv in pairs(v) do
-							toml = table.concat({toml, "[[", table.concat(cache, "."), "]]\n"})
+							toml = table.concat({ toml, "[[", table.concat(cache, "."), "]]\n" })
 							for k3, v3 in pairs(vv) do
 								if type(v3) ~= "table" then
 									vv[k3] = nil
@@ -626,16 +644,16 @@ TOML.encode = function(tbl)
 						table.remove(cache)
 					else
 						-- plain ol boring array
-						toml = table.concat({toml, k, " = [\n"})
+						toml = table.concat({ toml, k, " = [\n" })
 						for kk, vv in pairs(first) do
-							toml = table.concat({toml, tostring(vv), ",\n"})
+							toml = table.concat({ toml, tostring(vv), ",\n" })
 						end
-						toml = table.concat({toml, "]\n"})
+						toml = table.concat({ toml, "]\n" })
 					end
 				else
 					-- just a key/value table, folks
 					table.insert(cache, k)
-					toml = table.concat({toml, "[", table.concat(cache, "."), "]\n"})
+					toml = table.concat({ toml, "[", table.concat(cache, "."), "]\n" })
 					parse(first)
 					parse(v)
 					table.remove(cache)
@@ -643,9 +661,9 @@ TOML.encode = function(tbl)
 			end
 		end
 	end
-	
+
 	parse(tbl)
-	
+
 	return toml:sub(1, -2)
 end
 

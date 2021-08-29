@@ -1,0 +1,3 @@
+[dependencies]
+clap = "2"
+foo = { path = "crates/foo" }
