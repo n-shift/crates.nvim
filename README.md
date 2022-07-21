@@ -1,3 +1,5 @@
+THIS PROJECT IS NOT MAINTAINED ANYMORE, look at [Saecki's version](https://github.com/Saecki/crates.nvim)
+
 # 📦 crates.nvim
 Lua plugin for managing Rust's project dependencies, inspired by [vuki656/package-info.nvim](https://github.com/vuki656/package-info.nvim)
 
